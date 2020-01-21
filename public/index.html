@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Viz</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div style="position: absolute; left: 10px; top: 10px">
+    <button id="color">color</button>
+    <button id="uncolor">b&amp;w</button>
+    <button id="xAxis">x axis</button>
+    <button id="yAxis">y axis</button>
+    <button id="unAxis">no axis</button>
+    <button id="lines">lines</button>
+    <button id="unlines">no lines</button>
+  </div>
+  <div class="flexing">
+    <svg id="viz">
+      <defs>
+        <marker
+          id="arrow"
+          markerUnits="strokeWidth"
+          markerWidth="12"
+          markerHeight="12"
+          viewBox="0 0 12 12"
+          refX="6"
+          refY="6"
+          orient="auto">
+          <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #f00;"></path>
+        </marker>
+      </defs>
+    </svg>
+    <div id="node">
+      <h2 id="node-hash"></h2>
+      <pre id="node-details"></pre>
+    </div>
+  </div>
+  <script src="/lib/luxon.min.js"></script>
+  <script src="/lib/d3.v5.min.js"></script>
+  <script src="/js/script.js"></script>
+</body>
+</html>
