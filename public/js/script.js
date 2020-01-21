@@ -20,7 +20,7 @@
         c.date = c.committer.date;
       }
     }
-    c.shortHash = c.hash.substr(0,7);
+    c.shortHash = c.hash.substr(0, 7);
     if (c.type === 'commit') {
       c.children = [];
       c.parents = [];
@@ -29,7 +29,8 @@
     }
   });
 
-  const arrows = [];
+  const arrowsUp = [];
+  const arrowsOver = [];
 
   // link the lists and get arrow references
   commits.forEach(commit => {
@@ -38,9 +39,9 @@
       commit.parents.forEach(parent => {
         if (parent) {
           parent.children.push(commit);
-          arrows.push({
-            from: commit,
-            to: parent
+          arrowsUp.push({
+            target: commit,
+            source: parent
           });
         }
       });
@@ -50,9 +51,9 @@
       commit.nested.forEach(nest => {
         if (nest) {
           nest.wrappers.push(commit);
-          arrows.push({
-            from: commit,
-            to: nest
+          arrowsOver.push({
+            source: commit,
+            target: nest
           });
         }
       });
@@ -69,7 +70,7 @@
   });
   function copyNest(commit, depth) {
     commit.nested.forEach((n, i) => {
-      const timeSeq = commit.timeSeq + ((i+1)/(commit.nested.length+2)/Math.pow(10,depth));
+      const timeSeq = commit.timeSeq + ((i+1)/(commit.nested.length+2)/Math.pow(10, depth));
       if (typeof n.timeSeq === 'undefined' || timeSeq < n.timeSeq) {
         n.timeSeq = timeSeq;
       }
@@ -98,7 +99,7 @@
 
   // build branches
   const cs = commits.filter(c => c.type === 'commit');
-  cs.sort((a,b) => a.date - b.date);
+  cs.sort((a, b) => a.date - b.date);
   let xWidths = {
     min: 0,
     max: -1
@@ -180,11 +181,13 @@
   //console.log(commits, xWidths, timeSeq);
 
 
+  const commitDistance = 25;
+  const radius = 7;
   const positionStrength = 0.025;
-  let currentStroke = 'none';
   let currentFill = 'steelblue';
   let currentLineFill = 'steelblue';
   let showLines = false;
+  let showTags = false;
 
   const margin = {
     top: 50,
@@ -194,8 +197,6 @@
   };
   const width = document.getElementById('viz').clientWidth; // window.innerWidth / 2;
   const height = window.innerHeight;
-
-  const radius = 5;
 
   // make details not grow too big
   const node = document.getElementById('node');
@@ -233,18 +234,27 @@
     d3.select(this)
       .attr('r', radius * 1.4);
 
-    const text = svg.append('text');
+    if (!showTags) {
+      const text = svg.append('text');
 
-    text.attr('id', 't' + d.shortHash);
-    text.attr('x', function() { return d.x + 12; });
-    text.attr('y', function() { return d.y; });
-    text.text(d.shortHash);
+      text.attr('id', 't' + d.shortHash);
+      text.attr('x', function() { return d.x + 12; });
+      text.attr('y', function() { return d.y - 2; });
+      text.attr('font', '12pt Arial');
+      //text.attr('color', currentFill(d))
+      text.attr('dominant-baseline', 'central');
+
+      text.text(d.shortHash);
+    }
   }
 
   function handleMouseOut(d) {
     d3.select(this)
       .attr('r', radius);
-    d3.select('#t' + d.shortHash).remove();
+    const tag = d3.select('#t' + d.shortHash);
+    if (tag) {
+      tag.remove();
+    }
   }
 
   const nodeHash = document.getElementById('node-hash');
@@ -266,7 +276,7 @@
     dots.enter()
       .append('circle')
         .attr('class', 'commit')
-        .style('stroke', currentStroke)
+        .style('stroke', 'none')
         .style('fill', currentFill)
         .attr('r', radius)
         .on('mouseover', handleMouseOver)
@@ -279,29 +289,65 @@
       .attr('cx', d => d.x)
       .attr('cy', d => d.y);
 
-    const lineData = showLines ? arrows : [];
-    const lines = svg.selectAll('.arrow').data(lineData);
+    const lineUpData = showLines ? arrowsUp : [];
+    const linesUp = svg.selectAll('.arrowUp').data(lineUpData);
 
-    lines.enter()
-      .append('line')
-      .attr('class', 'arrow')
-      .attr('stroke-width',1)
-      //.attr('marker-end','url(#arrow)')
-      .attr('x1',d => d.from.x)
-      .attr('y1',d => d.from.y)
-      .attr('x2',d => d.to.x)
-      .attr('y2',d => d.to.y)
-      .attr('stroke',currentLineFill);
+    const linkVertical = d3.linkVertical()
+      .x(d => d.x)
+      .y(d => d.y);
 
-    lines.transition()
+    linesUp.enter()
+      .append('path')
+      .attr('class', 'arrowUp')
+      .attr('fill', 'none')
+      .attr('stroke-width', 2)
+      .attr('stroke', currentLineFill)
+      .attr('d', linkVertical);
+
+     linesUp.transition()
       .duration(3)
-      .attr('x1',d => d.from.x)
-      .attr('y1',d => d.from.y)
-      .attr('x2',d => d.to.x)
-      .attr('y2',d => d.to.y)
-      .attr('stroke',currentLineFill);
+      .attr('d', linkVertical)
+      .attr('stroke', currentLineFill);
 
-    lines.exit().remove();
+    linesUp.exit().remove();
+
+
+    const lineOverData = showLines ? arrowsOver : [];
+    const linesOver = svg.selectAll('.arrowOver').data(lineOverData);
+    const linkHorizontal = d3.linkHorizontal()
+      .x(d => d.x)
+      .y(d => d.y);
+
+    linesOver.enter()
+      .append('path')
+      .attr('class', 'arrowOver')
+      .attr('fill', 'none')
+      .attr('stroke-width', 2)
+      .attr('stroke', currentLineFill)
+      .attr('d', linkHorizontal);
+      //.attr('marker-end', 'url(#arrow)');
+
+    linesOver.transition()
+      .duration(3)
+      .attr('d', linkHorizontal)
+      .attr('stroke', currentLineFill);
+
+    linesOver.exit().remove();
+
+    const tagsData = (showTags && x && y) ? commits : [];
+    const tags = svg.selectAll('.tag').data(tagsData);
+
+    tags.enter()
+      .append('text')
+      .attr('class', 'tag')
+      .attr('x', d => x(xWidths.max))
+      .attr('dominant-baseline', 'central')
+      .attr('y', d => y(d.yPos))
+      .text(d => d.shortHash)
+      .on('click', handleClick);
+
+    tags.exit().remove();
+
   }
 
   document.getElementById('unAxis').addEventListener('click', function () {
@@ -314,7 +360,7 @@
       .force('x', d3.forceX(width / 2).strength(positionStrength))
       .force('y', d3.forceY(height / 2).strength(positionStrength))
       .force('center', d3.forceCenter( width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius(5))
+      .force('collide', d3.forceCollide().radius(radius))
       .alpha(1)
       .restart();
   });
@@ -375,7 +421,9 @@
 
     y = d3.scaleLinear()
       .domain([yHeights.min, yHeights.max])
-      .range([height - margin.bottom, margin.top+50]);
+      .range([margin.top+(commits.length*commitDistance), margin.top+50]);
+      // TODO: what if we have more than a page's worth?
+      //.range([height - margin.bottom, margin.top+50]);
 
     simulation
       .force('charge', null)
@@ -393,7 +441,7 @@
       .range(d3.schemeSet1);
 
     currentFill = d => colorScale(d.type);
-    currentLineFill = d => colorScale(d.to.type);
+    currentLineFill = d => colorScale(d.target.type);
 
     svg.selectAll('.commit').data(commits)
       .transition()
@@ -401,10 +449,14 @@
         .style('fill', currentFill);
 
     if (showLines) {
-      svg.selectAll('.arrow').data(arrows)
+      svg.selectAll('.arrowUp').data(arrowsUp)
         .transition()
           .duration(750)
-          .style('fill', currentLineFill);
+          .style('stroke', currentLineFill);
+      svg.selectAll('.arrowOver').data(arrowsOver)
+        .transition()
+          .duration(750)
+          .style('stroke', currentLineFill);
     }
 
     // build legend: https://www.d3-graph-gallery.com/graph/custom_legend.html
@@ -416,7 +468,7 @@
       .append('rect')
         .attr('class', 'legend-dot')
         .attr('x', 10)
-        .attr('y', function(d,i){ return 40 + i*(size+5)})
+        .attr('y', function(d, i){ return 40 + i*(size+5)})
         .attr('width', size)
         .attr('height', size)
         .style('fill', d => colorScale(d));
@@ -428,7 +480,7 @@
       .append('text')
         .attr('class', 'legend-label')
         .attr('x', 10 + size*1.2)
-        .attr('y', function(d,i){ return 40 + i*(size+5) + (size/2)})
+        .attr('y', function(d, i){ return 40 + i*(size+5) + (size/2)})
         .style('fill', d => colorScale(d))
         .text(d => d)
         .attr('text-anchor', 'left')
@@ -445,10 +497,14 @@
         .style('fill', currentFill);
 
     if (showLines) {
-      svg.selectAll('.arrow').data(arrows)
+      svg.selectAll('.arrowUp').data(arrowsUp)
         .transition()
           .duration(750)
-          .style('fill', currentLineFill);
+          .style('stroke', currentLineFill);
+      svg.selectAll('.arrowOver').data(arrowsOver)
+        .transition()
+          .duration(750)
+          .style('stroke', currentLineFill);
     }
 
     svg.selectAll('.legend-label').remove();
@@ -463,6 +519,16 @@
 
   document.getElementById('unlines').addEventListener('click', function () {
     showLines = false;
+    // TODO: fade
+  });
+
+  document.getElementById('tags').addEventListener('click', function () {
+    showTags = true;
+    // TODO: fade
+  });
+
+  document.getElementById('untags').addEventListener('click', function () {
+    showTags = false;
     // TODO: fade
   });
 

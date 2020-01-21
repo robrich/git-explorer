@@ -4,6 +4,7 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: Arial;
 }
 .flexing {
   display: flex;
@@ -32,7 +33,7 @@ html, body {
   flex-grow: 1;
   margin: 0;
 }
-.commit {
+.commit, .tag {
   cursor: pointer;
 }
 .type-commit {
@@ -43,4 +44,7 @@ html, body {
 }
 .type-blob {
   color: rgb(77, 175, 74);
+}
+.tag {
+  font: 12pt Arial;
 }

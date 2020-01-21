@@ -10,6 +10,7 @@ router.get('/commits', async (req, res, next) => {
   try {
     // we could cache this to make it faster but we probably want to refresh on each change
     const json = await getNodes(config.gitRepo);
+    res.setHeader('Last-Modified', (new Date()).toUTCString()); // avoid '304 not modified'
     res.json(json);
   } catch (err) {
     next(err);
