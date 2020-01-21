@@ -258,11 +258,13 @@
   }
 
   const nodeHash = document.getElementById('node-hash');
+  const nodeRefs = document.getElementById('node-refs');
   const nodeDetails = document.getElementById('node-details');
   async function handleClick(d) {
     console.log('clicked', d); // TODO: what else would we like to show?
     nodeHash.innerText = d.hash;
     nodeHash.className = 'type-'+d.type;
+    nodeRefs.innerText = d.refs ? d.refs.join(' ') : '';
     nodeDetails.innerText = (d.catfile || []).join('\n');
 
     if (d.type === 'blob') {
@@ -277,6 +279,8 @@
       .append('circle')
         .attr('class', 'commit')
         .style('stroke', 'none')
+        //.style('stroke', 'steelblue')
+        //.style('stroke-width', 2)
         .style('fill', currentFill)
         .attr('r', radius)
         .on('mouseover', handleMouseOver)
@@ -343,7 +347,14 @@
       .attr('x', d => x(xWidths.max))
       .attr('dominant-baseline', 'central')
       .attr('y', d => y(d.yPos))
-      .text(d => d.shortHash)
+      .text(d => {
+        let label = d.shortHash;
+        // TODO: draw box with rounded border
+        if (d.refs) {
+          label += ' ' + d.refs.join(' ');
+        }
+        return label;
+      })
       .on('click', handleClick);
 
     tags.exit().remove();

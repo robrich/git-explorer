@@ -1,5 +1,5 @@
 import express from 'express';
-import config from '../../env.json';
+import config from '../env.json';
 // { gitRepo: 'path to the directory with git repo (not to the .git folder, to the parent dir)' }
 
 import { getBlobContents, getNodes } from '../gitter';

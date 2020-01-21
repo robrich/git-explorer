@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promises as fs } from 'fs';
 import { DateTime } from 'luxon';
-import { join } from 'path';
+import { join, relative } from 'path';
 import { promisify } from 'util';
 import { inflate } from 'zlib';
 
@@ -12,8 +12,10 @@ const execify = promisify(exec);
 // repoPath: path to the directory with git repo (not to the .git folder, to the parent dir)
 export async function getNodes(repoPath: string) {
   const files = await getAllUnpackedCommits(repoPath);
-  const fileInfo = await Promise.all(files.map(async f => await getHash(repoPath, f)));
-  return fileInfo;
+  const commits = await Promise.all(files.map(async f => await getHash(repoPath, f)));
+  const refs = await getRefs(repoPath);
+  addRefs(commits, refs);
+  return commits;
 }
 
 export async function getBlobContents(repoPath: string, hash: string) {
@@ -46,6 +48,7 @@ interface GitInfo {
   length: number;
   nestedNodes: NestedNode[];
   parentNodes?: string[];
+  refs?: string[];
   author?: NameAndDate;
   committer?: NameAndDate;
   // blank for blobs just to save space
@@ -64,6 +67,11 @@ interface NameAndDate {
   name: string | undefined;
   email: string | undefined;
   date: string | undefined;
+}
+
+interface Ref {
+  label: string;
+  target: string;
 }
 
 async function getHash(repoPath: string, hash: string): Promise<GitInfo> {
@@ -198,4 +206,70 @@ function getNameAndDate(content: string): NameAndDate | undefined {
 
 async function getBlob(repoPath: string, info: GitInfo) {
   // nothing to do
+}
+
+async function getRefs(repoPath: string): Promise<Ref[]> {
+  const gitDir = join(repoPath, '.git');
+  const files = await walk(join(gitDir, 'refs'));
+  const localFiles = files.map(f => relative(gitDir, f));
+  // ASSUME: they exist
+  localFiles.push('HEAD');
+  localFiles.push('ORIG_HEAD');
+
+  const refs = await Promise.all(localFiles.map(async f => {
+    const content: string = await fs.readFile(join(gitDir, f), 'utf-8');
+    let target = content.split('\n')[0];
+    if (target.indexOf('ref: ') > -1) {
+      target = target.replace('ref: ', '');
+    }
+    return {
+      label: f.replace(/\\/g, '/'),
+      target
+    };
+  }));
+  return refs;
+}
+
+function addRefs(commits: GitInfo[], refs: Ref[]) {
+  if (!commits || !refs) {
+    return;
+  }
+
+  refs.forEach(ref => {
+
+    let target = ref.target;
+
+    if (ref.target.indexOf('refs') > -1) {
+      const t = refs.find(r => r.label === ref.target);
+      if (t) {
+        target = t.target;
+      }
+    }
+
+    const commit = commits.find(c => c.hash === target);
+    if (commit) {
+      if (!commit.refs) {
+        commit.refs = [];
+      }
+      commit.refs.push(ref.label);
+    }
+  });
+}
+
+// https://gist.github.com/kethinov/6658166
+async function walk(dir: string, filelist: string[] = []): Promise<string[]> {
+  const files = await fs.readdir(dir);
+
+  for (const file of files) {
+    const filepath = join(dir, file);
+    const stat = await fs.stat(filepath);
+
+    if (stat.isDirectory()) {
+      filelist = await walk(filepath, filelist);
+    } else {
+      filelist.push(filepath);
+    }
+  }
+
+  return filelist;
 }

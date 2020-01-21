@@ -23,12 +23,13 @@ html, body {
   padding-top: 50px;
   flex-direction: column;
 }
-#node-hash {
+#node * {
+  margin-top: 3px;
+  margin-bottom: 3px;
   padding: 3px;
 }
 #node-details {
   background-color: #f5f5f5;
-  padding: 3px;
   overflow: auto;
   flex-grow: 1;
   margin: 0;
