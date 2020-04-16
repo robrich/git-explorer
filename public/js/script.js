@@ -6,7 +6,7 @@
   const nodeTypes = ['commit', 'tree', 'blob'];
 
   // or axios or anything
-  const commits = await d3.json('/api/commits');
+  const commits = (await d3.json('/api/commits')).filter(c => c);
   commits.forEach(c => {
     if (c.author && c.author.date) {
       c.author.date = DateTime.fromISO(c.author.date);
@@ -87,10 +87,14 @@
     // a tree or blob without a commit, assume (badly) "latest"
     c.timeSeq = timeSeq.max;
   });
-  const st = commits.filter(c => c);
+  const st = [...commits]; // so I can sort it and not break the original
   st.sort((a, b) => a.timeSeq - b.timeSeq);
   st.forEach((commit, i) => {
-    commit.yPos = i;
+    commit.yTime = i;
+  });
+  st.sort((a, b) => a.hash < b.hash ? 1 : -1);
+  st.forEach((commit, i) => {
+    commit.yHash = i;
   });
   const yHeights = {
     min: 0,
@@ -203,6 +207,7 @@
   node.style.width = node.clientWidth+'px';
 
   // the functions to move dots on each axis
+  let yProp = null;
   let y = null;
   let x = null;
 
@@ -261,14 +266,20 @@
   const nodeRefs = document.getElementById('node-refs');
   const nodeDetails = document.getElementById('node-details');
   async function handleClick(d) {
-    console.log('clicked', d); // TODO: what else would we like to show?
+    //console.log('clicked', d); // TODO: what else would we like to show?
     nodeHash.innerText = d.hash;
-    nodeHash.className = 'type-'+d.type;
+    if (showTags) {
+      nodeHash.className = 'type-'+d.type;
+    } else {
+      nodeHash.className = '';
+    }
     nodeRefs.innerText = d.refs ? d.refs.join(' ') : '';
     nodeDetails.innerText = (d.catfile || []).join('\n');
 
     if (d.type === 'blob') {
-      nodeDetails.innerText = await d3.json(`/api/blob/${d.hash}`);
+      // ASSUME: blob is text
+      const res = await fetch(`/api/blob/${d.hash}`);
+      nodeDetails.innerText = await res.text();
     }
   }
 
@@ -346,12 +357,12 @@
       .attr('class', 'tag')
       .attr('x', d => x(xWidths.max))
       .attr('dominant-baseline', 'central')
-      .attr('y', d => y(d.yPos))
+      .attr('y', d => y(d[yProp]))
       .text(d => {
         let label = d.shortHash;
         // TODO: draw box with rounded border
         if (d.refs) {
-          label += ' ' + d.refs.join(' ');
+          label += ' ' + d.refs.map(r => r.split('/').slice(-1)[0]).join(' ');
         }
         return label;
       })
@@ -364,6 +375,7 @@
   document.getElementById('unAxis').addEventListener('click', function () {
     x = null;
     y = null;
+    yProp = null;
 
     simulation
       .force('charge', d3.forceManyBody().distanceMax(20).strength(-15))
@@ -376,26 +388,40 @@
       .restart();
   });
 
-  /*
-  // break into groups by type
-  document.getElementById('xAxis').addEventListener('click', function() {
+  document.getElementById('alphabetical').addEventListener('click', function() {
 
-    x = d3.scaleOrdinal()
-      .domain(nodeTypes)
-      .range([margin.left, margin.left + 30, margin.left + 100]);
+    yProp = 'yHash';
+    y = d3.scaleLinear()
+      .domain([yHeights.min, yHeights.max])
+      .range([margin.top+(commits.length*commitDistance), margin.top+50]);
+      // TODO: what if we have more than a page's worth?
+      //.range([height - margin.bottom, margin.top+50]);
+
+    x = d3.scaleLinear()
+      .domain([xWidths.min, xWidths.max])
+      .range([margin.left, margin.left + 130]);
+
 
     simulation
       .force('charge', null)
       .force('center', null)
-      .force('x', d3.forceX(d => x(d.type)))
-      .alpha(1)
+      .force('y', d3.forceY(d => y(d[yProp])))
+      .force('x', d3.forceX(d => x(xWidths.max-1)))
+      .alpha(2)
       .restart();
 
+    showLines = false;
+    showTags = false; // TODO: animate or re-show tags after simulation finishes
   });
-  */
 
-  // TODO: do this with yAxis and restore old xAxis?
-  document.getElementById('xAxis').addEventListener('click', function() {
+  document.getElementById('parentChild').addEventListener('click', function() {
+
+    yProp = 'yTime';
+    y = d3.scaleLinear()
+      .domain([yHeights.min, yHeights.max])
+      .range([margin.top+(commits.length*commitDistance), margin.top+50]);
+      // TODO: what if we have more than a page's worth?
+      //.range([height - margin.bottom, margin.top+50]);
 
     x = d3.scaleLinear()
       .domain([xWidths.min, xWidths.max])
@@ -404,45 +430,12 @@
     simulation
       .force('charge', null)
       .force('center', null)
+      .force('y', d3.forceY(d => y(d[yProp])))
       .force('x', d3.forceX(d => x(d.xPos)))
-      .alpha(1)
-      .restart();
-
-  });
-
-  /*
-  // by time
-  document.getElementById('yAxis').addEventListener('click', function() {
-
-    y = d3.scaleLinear()
-      .domain([timeSeq.min, timeSeq.max])
-      .range([height - margin.bottom, margin.top]);
-
-    simulation
-      .force('charge', null)
-      .force('center', null)
-      .force('y', d3.forceY(d => y(d.timeSeq)))
       .alpha(2)
       .restart();
 
-  });
-  */
-
-  document.getElementById('yAxis').addEventListener('click', function() {
-
-    y = d3.scaleLinear()
-      .domain([yHeights.min, yHeights.max])
-      .range([margin.top+(commits.length*commitDistance), margin.top+50]);
-      // TODO: what if we have more than a page's worth?
-      //.range([height - margin.bottom, margin.top+50]);
-
-    simulation
-      .force('charge', null)
-      .force('center', null)
-      .force('y', d3.forceY(d => y(d.yPos)))
-      .alpha(2)
-      .restart();
-
+    showTags = false; // TODO: animate or re-show tags after simulation finishes
   });
 
   document.getElementById('color').addEventListener('click', function() {
@@ -476,7 +469,7 @@
     svg.selectAll('legend-dot')
       .data(nodeTypes)
       .enter()
-      .append('rect')
+      .append('rect') // TODO: circle
         .attr('class', 'legend-dot')
         .attr('x', 10)
         .attr('y', function(d, i){ return 40 + i*(size+5)})

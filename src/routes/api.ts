@@ -2,7 +2,8 @@ import express from 'express';
 import config from '../env.json';
 // { gitRepo: 'path to the directory with git repo (not to the .git folder, to the parent dir)' }
 
-import { getBlobContents, getNodes } from '../gitter';
+import { getNodes } from '../gitter';
+import { getBlobContents } from '../gitter/get-blob-contents';
 
 const router = express.Router();
 

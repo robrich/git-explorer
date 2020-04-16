@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "strict": true,
+    "importHelpers": true,
+    "removeComments": true,
+    "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "target": "es6",
     "noImplicitAny": true,
@@ -16,7 +20,7 @@
       ]
     },
     "lib": [
-      "es2015"
+      "es2019"
     ]
   },
   "include": [

@@ -8,10 +8,11 @@
 </head>
 <body>
   <div style="position: absolute; left: 10px; top: 10px">
-    <button id="color">color</button>
-    <button id="uncolor">b&amp;w</button>
-    <button id="xAxis">x axis</button>
-    <button id="yAxis">y axis</button>
+    <!-- TODO: move to check boxes -->
+    <button id="color">show type</button>
+    <button id="uncolor">hide type</button>
+    <button id="alphabetical">alphabetical</button>
+    <button id="parentChild">parent/child</button>
     <button id="unAxis">no axis</button>
     <button id="lines">lines</button>
     <button id="unlines">no lines</button>
@@ -20,7 +21,7 @@
   </div>
   <div class="flexing">
     <svg id="viz">
-      <defs>
+      <!-- arrow still looks weird defs>
         <marker
           id="arrow"
           markerUnits="strokeWidth"
@@ -32,7 +33,7 @@
           orient="auto">
           <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #f00;"></path>
         </marker>
-      </defs>
+      </defs-->
     </svg>
     <div id="node">
       <h2 id="node-hash"></h2>
