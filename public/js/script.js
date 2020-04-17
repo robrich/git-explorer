@@ -268,7 +268,8 @@
   async function handleClick(d) {
     //console.log('clicked', d); // TODO: what else would we like to show?
     nodeHash.innerText = d.hash;
-    if (showTags) {
+    // FRAGILE: ASSUME: if commits aren't in a blob we're also showing types
+    if (x && y) {
       nodeHash.className = 'type-'+d.type;
     } else {
       nodeHash.className = '';
