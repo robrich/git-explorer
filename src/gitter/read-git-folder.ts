@@ -24,11 +24,14 @@ async function getAllUnpackedCommits(repoPath: string): Promise<string[]> {
   const gitDir = join(repoPath, '.git/objects');
   let dirs = await fs.readdir(gitDir);
   dirs = dirs.filter(d => d.length === 2);
+  if (!dirs.length) {
+    return [];
+  }
   const files = await Promise.all(dirs.map(async (d) => {
     const filesInDir = await fs.readdir(join(gitDir, d));
     return filesInDir.filter(f => !f.endsWith('.idx') && !f.endsWith('.pack')).map(f => d + f);
   }));
-  return files.flat();
+  return (files ?? []).flat();
 }
 
 // FRAGILE: similar to read-ref-log#getPackedHash, TODO: centralize duplication
