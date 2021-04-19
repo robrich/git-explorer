@@ -12,6 +12,9 @@ html, body {
   height: 100%;
   align-content: stretch;
 }
+.viz_dev{
+  overflow: scroll;
+}
 #viz {
   width: 400px;
   border-right: 1px solid #696969;

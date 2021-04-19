@@ -387,6 +387,9 @@
       .force('collide', d3.forceCollide().radius(radius))
       .alpha(1)
       .restart();
+
+    svg.attr('height', window.innerHeight);
+
   });
 
   document.getElementById('alphabetical').addEventListener('click', function() {
@@ -410,6 +413,8 @@
       .force('x', d3.forceX(d => x(xWidths.max-1)))
       .alpha(2)
       .restart();
+
+    svg.attr('height', (commits.length*commitDistance)+100);
 
     showLines = false;
     showTags = false; // TODO: animate or re-show tags after simulation finishes
@@ -435,6 +440,8 @@
       .force('x', d3.forceX(d => x(d.xPos)))
       .alpha(2)
       .restart();
+
+    svg.attr('height', (commits.length*commitDistance)+100);
 
     showTags = false; // TODO: animate or re-show tags after simulation finishes
   });
