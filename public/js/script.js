@@ -47,7 +47,7 @@
       });
     }
     if (commit.nestedNodes) {
-      commit.nested = commit.nestedNodes.map(n => commits.find(c => c.hash === n.hash));
+      commit.nested = commit.nestedNodes.map(n => commits.find(c => c.hash === n.hash)).filter(n => n);
       commit.nested.forEach(nest => {
         if (nest) {
           nest.wrappers.push(commit);
