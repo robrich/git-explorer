@@ -13,7 +13,8 @@ html, body {
   align-content: stretch;
 }
 .viz_dev{
-  overflow: scroll;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 #viz {
   width: 400px;
