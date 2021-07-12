@@ -374,6 +374,9 @@
   }
 
   document.getElementById('unAxis').addEventListener('click', function () {
+    Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
+    document.getElementById('unAxis').classList.add('selected');
+
     x = null;
     y = null;
     yProp = null;
@@ -393,6 +396,9 @@
   });
 
   document.getElementById('alphabetical').addEventListener('click', function() {
+
+    Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
+    document.getElementById('alphabetical').classList.add('selected');
 
     yProp = 'yHash';
     y = d3.scaleLinear()
@@ -422,6 +428,9 @@
 
   document.getElementById('parentChild').addEventListener('click', function() {
 
+    Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
+    document.getElementById('parentChild').classList.add('selected');
+
     yProp = 'yTime';
     y = d3.scaleLinear()
       .domain([yHeights.min, yHeights.max])
@@ -446,102 +455,102 @@
     showTags = false; // TODO: animate or re-show tags after simulation finishes
   });
 
-  document.getElementById('color').addEventListener('click', function() {
+  document.getElementById('color').addEventListener('change', function() {
 
-    const colorScale = d3.scaleOrdinal()
-      .domain(nodeTypes)
-      .range(d3.schemeSet1);
+    if(this.checked) {
+       const colorScale = d3.scaleOrdinal()
+         .domain(nodeTypes)
+         .range(d3.schemeSet1);
 
-    currentFill = d => colorScale(d.type);
-    currentLineFill = d => colorScale(d.target.type);
+       currentFill = d => colorScale(d.type);
+       currentLineFill = d => colorScale(d.target.type);
 
-    svg.selectAll('.commit').data(commits)
-      .transition()
-        .duration(750)
-        .style('fill', currentFill);
+       svg.selectAll('.commit').data(commits)
+         .transition()
+           .duration(750)
+           .style('fill', currentFill);
 
-    if (showLines) {
-      svg.selectAll('.arrowUp').data(arrowsUp)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
-      svg.selectAll('.arrowOver').data(arrowsOver)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
+       if (showLines) {
+         svg.selectAll('.arrowUp').data(arrowsUp)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+         svg.selectAll('.arrowOver').data(arrowsOver)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+       }
+
+       // build legend: https://www.d3-graph-gallery.com/graph/custom_legend.html
+       // Add one dot in the legend for each name.
+       var size = 15;
+       svg.selectAll('legend-dot')
+         .data(nodeTypes)
+         .enter()
+         .append('rect') // TODO: circle
+           .attr('class', 'legend-dot')
+           .attr('x', 10)
+           .attr('y', function(d, i){ return 40 + i*(size+5)})
+           .attr('width', size)
+           .attr('height', size)
+           .style('fill', d => colorScale(d));
+
+       // Add one dot in the legend for each name.
+       svg.selectAll('legend-label')
+         .data(nodeTypes)
+         .enter()
+         .append('text')
+           .attr('class', 'legend-label')
+           .attr('x', 10 + size*1.2)
+           .attr('y', function(d, i){ return 40 + i*(size+5) + (size/2)})
+           .style('fill', d => colorScale(d))
+           .text(d => d)
+           .attr('text-anchor', 'left')
+           .style('alignment-baseline', 'middle');
+    } else {
+
+       currentFill = 'steelblue';
+       currentLineFill = 'steelblue'
+       svg.selectAll('.commit').data(commits)
+         .transition()
+           .duration(750)
+           .style('fill', currentFill);
+
+       if (showLines) {
+         svg.selectAll('.arrowUp').data(arrowsUp)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+         svg.selectAll('.arrowOver').data(arrowsOver)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+       }
+
+       svg.selectAll('.legend-label').remove();
+       svg.selectAll('.legend-dot').remove();
+
     }
-
-    // build legend: https://www.d3-graph-gallery.com/graph/custom_legend.html
-    // Add one dot in the legend for each name.
-    var size = 15;
-    svg.selectAll('legend-dot')
-      .data(nodeTypes)
-      .enter()
-      .append('rect') // TODO: circle
-        .attr('class', 'legend-dot')
-        .attr('x', 10)
-        .attr('y', function(d, i){ return 40 + i*(size+5)})
-        .attr('width', size)
-        .attr('height', size)
-        .style('fill', d => colorScale(d));
-
-    // Add one dot in the legend for each name.
-    svg.selectAll('legend-label')
-      .data(nodeTypes)
-      .enter()
-      .append('text')
-        .attr('class', 'legend-label')
-        .attr('x', 10 + size*1.2)
-        .attr('y', function(d, i){ return 40 + i*(size+5) + (size/2)})
-        .style('fill', d => colorScale(d))
-        .text(d => d)
-        .attr('text-anchor', 'left')
-        .style('alignment-baseline', 'middle');
   });
 
-  document.getElementById('uncolor').addEventListener('click', function () {
 
-    currentFill = 'steelblue';
-    currentLineFill = 'steelblue'
-    svg.selectAll('.commit').data(commits)
-      .transition()
-        .duration(750)
-        .style('fill', currentFill);
-
-    if (showLines) {
-      svg.selectAll('.arrowUp').data(arrowsUp)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
-      svg.selectAll('.arrowOver').data(arrowsOver)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
+  document.getElementById('lines').addEventListener('change', function () {
+    // TODO: fade
+    if(this.checked) {
+      showLines = true;
+    } else {
+      showLines = false;
     }
-
-    svg.selectAll('.legend-label').remove();
-    svg.selectAll('.legend-dot').remove();
-
   });
 
-  document.getElementById('lines').addEventListener('click', function () {
-    showLines = true;
+  document.getElementById('tags').addEventListener('change', function () {
     // TODO: fade
+    if(this.checked) {
+      showTags = true;
+    } else {
+      showTags = false;
+    }
   });
 
-  document.getElementById('unlines').addEventListener('click', function () {
-    showLines = false;
-    // TODO: fade
-  });
-
-  document.getElementById('tags').addEventListener('click', function () {
-    showTags = true;
-    // TODO: fade
-  });
-
-  document.getElementById('untags').addEventListener('click', function () {
-    showTags = false;
-    // TODO: fade
-  });
 
 }());

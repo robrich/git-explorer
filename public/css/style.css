@@ -17,7 +17,7 @@ html, body {
   overflow-y: auto;
 }
 #viz {
-  width: 400px;
+  width: 425px;
   border-right: 1px solid #696969;
 }
 #node {
@@ -52,4 +52,13 @@ html, body {
 }
 .tag {
   font: 12pt Arial;
+}
+
+.btn-group button {
+  float: left;
+}
+
+.btn-group button.selected {
+  background-color: rgb(55, 126, 184);
+  color: white;
 }

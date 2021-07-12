@@ -8,16 +8,14 @@
 </head>
 <body>
   <div style="position: absolute; left: 10px; top: 10px">
-    <!-- TODO: move to check boxes -->
-    <button id="color">show type</button>
-    <button id="uncolor">hide type</button>
-    <button id="alphabetical">alphabetical</button>
-    <button id="parentChild">parent/child</button>
-    <button id="unAxis">no axis</button>
-    <button id="lines">lines</button>
-    <button id="unlines">no lines</button>
-    <button id="tags">tags</button>
-    <button id="untags">no tags</button>
+    <span class="btn-group">
+      <button id="alphabetical">alphabetical</button>
+      <button id="parentChild">parent/child</button>
+      <button class="selected" id="unAxis">no axis</button>
+    </span>
+    <input type="checkbox" id="color"><label for="color">types</label>
+    <input type="checkbox" id="lines"><label for="lines">lines</label>
+    <input type="checkbox" id="tags"><label for="tags">tags</label>
   </div>
   <div class="flexing">
     <div class="viz_dev">
