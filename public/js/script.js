@@ -231,8 +231,13 @@
       .nodes(commits)
       .on('tick', updateDOM);
 
-  }
 
+    changeColorSetting();
+    changeLinesSetting();
+    changeTagsSetting();
+    arrangeNodes();
+
+  }
 
   function handleMouseOver(d) {
 
@@ -373,7 +378,26 @@
 
   }
 
+  function arrangeNodes() {
+      switch(sessionStorage.getItem('arrange')){
+      case 'alphabetical':
+         arrageNodesAlphabetical();
+         break;
+      case 'parentChild':
+         arrangeNodesParentChild();
+         break;
+      default: // 'unAxis'
+         arrageNodesUnAxis();
+         break;
+    }
+  }
+
   document.getElementById('unAxis').addEventListener('click', function () {
+    sessionStorage.setItem('arrange', 'unAxis');
+    arrangeNodes();
+  });
+
+  function arrageNodesUnAxis() {
     Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
     document.getElementById('unAxis').classList.add('selected');
 
@@ -392,11 +416,14 @@
       .restart();
 
     svg.attr('height', window.innerHeight);
-
-  });
+  }
 
   document.getElementById('alphabetical').addEventListener('click', function() {
+    sessionStorage.setItem('arrange', 'alphabetical');
+    arrangeNodes();
+  });
 
+  function arrageNodesAlphabetical(){
     Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
     document.getElementById('alphabetical').classList.add('selected');
 
@@ -424,10 +451,14 @@
 
     showLines = false;
     showTags = false; // TODO: animate or re-show tags after simulation finishes
-  });
+  }
 
   document.getElementById('parentChild').addEventListener('click', function() {
+    sessionStorage.setItem('arrange', 'parentChild');
+    arrangeNodes();
+  });
 
+  function arrangeNodesParentChild(){
     Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
     document.getElementById('parentChild').classList.add('selected');
 
@@ -453,11 +484,22 @@
     svg.attr('height', (commits.length*commitDistance)+100);
 
     showTags = false; // TODO: animate or re-show tags after simulation finishes
-  });
+  }
 
   document.getElementById('color').addEventListener('change', function() {
+    // store empty string instead of the string false, which will eval to true when recalled
+    sessionStorage.setItem('color', this.checked ? this.checked : '');
+    changeColorSetting();
+  });
 
-    if(this.checked) {
+  function changeColorSetting() {
+    var setting = sessionStorage.getItem('color');
+
+    // check the box in case we are loading from storage
+    // this will not trigger the change event
+    document.getElementById('color').checked = setting;
+
+    if(setting) {
        const colorScale = d3.scaleOrdinal()
          .domain(nodeTypes)
          .range(d3.schemeSet1);
@@ -531,26 +573,50 @@
        svg.selectAll('.legend-dot').remove();
 
     }
-  });
-
+  }
 
   document.getElementById('lines').addEventListener('change', function () {
+    // store empty string instead of the string false, which will eval to true when recalled
+    sessionStorage.setItem('lines', this.checked ? this.checked : '');
+    changeLinesSetting()
+  });
+
+  function changeLinesSetting() {
+
+    var setting = sessionStorage.getItem('lines');
+
+    // check the box in case we are loading from storage
+    // this will not trigger the change event
+    document.getElementById('lines').checked = setting;
+
     // TODO: fade
-    if(this.checked) {
+    if(setting) {
       showLines = true;
     } else {
       showLines = false;
     }
-  });
+  }
 
   document.getElementById('tags').addEventListener('change', function () {
+    // store empty string instead of the string false, which will eval to true when recalled
+    sessionStorage.setItem('tags', this.checked ? this.checked : '');
+    changeTagsSetting();
+  });
+
+  function changeTagsSetting() {
+    var setting = sessionStorage.getItem('tags');
+
+    // check the box in case we are loading from storage
+    // this will not trigger the change event
+    document.getElementById('tags').checked = setting;
+
     // TODO: fade
-    if(this.checked) {
+    if(setting) {
       showTags = true;
     } else {
       showTags = false;
     }
-  });
+  }
 
 
 }());
