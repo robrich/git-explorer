@@ -431,8 +431,6 @@
     y = d3.scaleLinear()
       .domain([yHeights.min, yHeights.max])
       .range([margin.top+(commits.length*commitDistance), margin.top+50]);
-      // TODO: what if we have more than a page's worth?
-      //.range([height - margin.bottom, margin.top+50]);
 
     x = d3.scaleLinear()
       .domain([xWidths.min, xWidths.max])
@@ -463,8 +461,6 @@
     y = d3.scaleLinear()
       .domain([yHeights.min, yHeights.max])
       .range([margin.top+(commits.length*commitDistance), margin.top+50]);
-      // TODO: what if we have more than a page's worth?
-      //.range([height - margin.bottom, margin.top+50]);
 
     x = d3.scaleLinear()
       .domain([xWidths.min, xWidths.max])
