@@ -448,9 +448,6 @@
       .restart();
 
     svg.attr('height', (commits.length*commitDistance)+100);
-
-    showLines = false;
-    showTags = false; // TODO: animate or re-show tags after simulation finishes
   }
 
   document.getElementById('parentChild').addEventListener('click', function() {
@@ -482,8 +479,6 @@
       .restart();
 
     svg.attr('height', (commits.length*commitDistance)+100);
-
-    showTags = false; // TODO: animate or re-show tags after simulation finishes
   }
 
   document.getElementById('color').addEventListener('change', function() {
