@@ -231,8 +231,13 @@
       .nodes(commits)
       .on('tick', updateDOM);
 
-  }
 
+    changeColorSetting();
+    changeLinesSetting();
+    changeTagsSetting();
+    arrangeNodes();
+
+  }
 
   function handleMouseOver(d) {
 
@@ -373,7 +378,29 @@
 
   }
 
+  function arrangeNodes() {
+      switch(sessionStorage.getItem('arrange')){
+      case 'alphabetical':
+         arrageNodesAlphabetical();
+         break;
+      case 'parentChild':
+         arrangeNodesParentChild();
+         break;
+      default: // 'unAxis'
+         arrageNodesUnAxis();
+         break;
+    }
+  }
+
   document.getElementById('unAxis').addEventListener('click', function () {
+    sessionStorage.setItem('arrange', 'unAxis');
+    arrangeNodes();
+  });
+
+  function arrageNodesUnAxis() {
+    Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
+    document.getElementById('unAxis').classList.add('selected');
+
     x = null;
     y = null;
     yProp = null;
@@ -389,17 +416,21 @@
       .restart();
 
     svg.attr('height', window.innerHeight);
-
-  });
+  }
 
   document.getElementById('alphabetical').addEventListener('click', function() {
+    sessionStorage.setItem('arrange', 'alphabetical');
+    arrangeNodes();
+  });
+
+  function arrageNodesAlphabetical(){
+    Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
+    document.getElementById('alphabetical').classList.add('selected');
 
     yProp = 'yHash';
     y = d3.scaleLinear()
       .domain([yHeights.min, yHeights.max])
       .range([margin.top+(commits.length*commitDistance), margin.top+50]);
-      // TODO: what if we have more than a page's worth?
-      //.range([height - margin.bottom, margin.top+50]);
 
     x = d3.scaleLinear()
       .domain([xWidths.min, xWidths.max])
@@ -415,19 +446,21 @@
       .restart();
 
     svg.attr('height', (commits.length*commitDistance)+100);
-
-    showLines = false;
-    showTags = false; // TODO: animate or re-show tags after simulation finishes
-  });
+  }
 
   document.getElementById('parentChild').addEventListener('click', function() {
+    sessionStorage.setItem('arrange', 'parentChild');
+    arrangeNodes();
+  });
+
+  function arrangeNodesParentChild(){
+    Array.from(document.getElementsByTagName("button")).forEach(b => b.classList.remove('selected'))
+    document.getElementById('parentChild').classList.add('selected');
 
     yProp = 'yTime';
     y = d3.scaleLinear()
       .domain([yHeights.min, yHeights.max])
       .range([margin.top+(commits.length*commitDistance), margin.top+50]);
-      // TODO: what if we have more than a page's worth?
-      //.range([height - margin.bottom, margin.top+50]);
 
     x = d3.scaleLinear()
       .domain([xWidths.min, xWidths.max])
@@ -442,106 +475,139 @@
       .restart();
 
     svg.attr('height', (commits.length*commitDistance)+100);
+  }
 
-    showTags = false; // TODO: animate or re-show tags after simulation finishes
+  document.getElementById('color').addEventListener('change', function() {
+    // store empty string instead of the string false, which will eval to true when recalled
+    sessionStorage.setItem('color', this.checked ? this.checked : '');
+    changeColorSetting();
   });
 
-  document.getElementById('color').addEventListener('click', function() {
+  function changeColorSetting() {
+    var setting = sessionStorage.getItem('color');
 
-    const colorScale = d3.scaleOrdinal()
-      .domain(nodeTypes)
-      .range(d3.schemeSet1);
+    // check the box in case we are loading from storage
+    // this will not trigger the change event
+    document.getElementById('color').checked = setting;
 
-    currentFill = d => colorScale(d.type);
-    currentLineFill = d => colorScale(d.target.type);
+    if(setting) {
+       const colorScale = d3.scaleOrdinal()
+         .domain(nodeTypes)
+         .range(d3.schemeSet1);
 
-    svg.selectAll('.commit').data(commits)
-      .transition()
-        .duration(750)
-        .style('fill', currentFill);
+       currentFill = d => colorScale(d.type);
+       currentLineFill = d => colorScale(d.target.type);
 
-    if (showLines) {
-      svg.selectAll('.arrowUp').data(arrowsUp)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
-      svg.selectAll('.arrowOver').data(arrowsOver)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
+       svg.selectAll('.commit').data(commits)
+         .transition()
+           .duration(750)
+           .style('fill', currentFill);
+
+       if (showLines) {
+         svg.selectAll('.arrowUp').data(arrowsUp)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+         svg.selectAll('.arrowOver').data(arrowsOver)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+       }
+
+       // build legend: https://www.d3-graph-gallery.com/graph/custom_legend.html
+       // Add one dot in the legend for each name.
+       var size = 15;
+       svg.selectAll('legend-dot')
+         .data(nodeTypes)
+         .enter()
+         .append('rect') // TODO: circle
+           .attr('class', 'legend-dot')
+           .attr('x', 10)
+           .attr('y', function(d, i){ return 40 + i*(size+5)})
+           .attr('width', size)
+           .attr('height', size)
+           .style('fill', d => colorScale(d));
+
+       // Add one dot in the legend for each name.
+       svg.selectAll('legend-label')
+         .data(nodeTypes)
+         .enter()
+         .append('text')
+           .attr('class', 'legend-label')
+           .attr('x', 10 + size*1.2)
+           .attr('y', function(d, i){ return 40 + i*(size+5) + (size/2)})
+           .style('fill', d => colorScale(d))
+           .text(d => d)
+           .attr('text-anchor', 'left')
+           .style('alignment-baseline', 'middle');
+    } else {
+
+       currentFill = 'steelblue';
+       currentLineFill = 'steelblue'
+       svg.selectAll('.commit').data(commits)
+         .transition()
+           .duration(750)
+           .style('fill', currentFill);
+
+       if (showLines) {
+         svg.selectAll('.arrowUp').data(arrowsUp)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+         svg.selectAll('.arrowOver').data(arrowsOver)
+           .transition()
+             .duration(750)
+             .style('stroke', currentLineFill);
+       }
+
+       svg.selectAll('.legend-label').remove();
+       svg.selectAll('.legend-dot').remove();
+
     }
+  }
 
-    // build legend: https://www.d3-graph-gallery.com/graph/custom_legend.html
-    // Add one dot in the legend for each name.
-    var size = 15;
-    svg.selectAll('legend-dot')
-      .data(nodeTypes)
-      .enter()
-      .append('rect') // TODO: circle
-        .attr('class', 'legend-dot')
-        .attr('x', 10)
-        .attr('y', function(d, i){ return 40 + i*(size+5)})
-        .attr('width', size)
-        .attr('height', size)
-        .style('fill', d => colorScale(d));
-
-    // Add one dot in the legend for each name.
-    svg.selectAll('legend-label')
-      .data(nodeTypes)
-      .enter()
-      .append('text')
-        .attr('class', 'legend-label')
-        .attr('x', 10 + size*1.2)
-        .attr('y', function(d, i){ return 40 + i*(size+5) + (size/2)})
-        .style('fill', d => colorScale(d))
-        .text(d => d)
-        .attr('text-anchor', 'left')
-        .style('alignment-baseline', 'middle');
+  document.getElementById('lines').addEventListener('change', function () {
+    // store empty string instead of the string false, which will eval to true when recalled
+    sessionStorage.setItem('lines', this.checked ? this.checked : '');
+    changeLinesSetting()
   });
 
-  document.getElementById('uncolor').addEventListener('click', function () {
+  function changeLinesSetting() {
 
-    currentFill = 'steelblue';
-    currentLineFill = 'steelblue'
-    svg.selectAll('.commit').data(commits)
-      .transition()
-        .duration(750)
-        .style('fill', currentFill);
+    var setting = sessionStorage.getItem('lines');
 
-    if (showLines) {
-      svg.selectAll('.arrowUp').data(arrowsUp)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
-      svg.selectAll('.arrowOver').data(arrowsOver)
-        .transition()
-          .duration(750)
-          .style('stroke', currentLineFill);
+    // check the box in case we are loading from storage
+    // this will not trigger the change event
+    document.getElementById('lines').checked = setting;
+
+    // TODO: fade
+    if(setting) {
+      showLines = true;
+    } else {
+      showLines = false;
     }
+  }
 
-    svg.selectAll('.legend-label').remove();
-    svg.selectAll('.legend-dot').remove();
-
+  document.getElementById('tags').addEventListener('change', function () {
+    // store empty string instead of the string false, which will eval to true when recalled
+    sessionStorage.setItem('tags', this.checked ? this.checked : '');
+    changeTagsSetting();
   });
 
-  document.getElementById('lines').addEventListener('click', function () {
-    showLines = true;
+  function changeTagsSetting() {
+    var setting = sessionStorage.getItem('tags');
+
+    // check the box in case we are loading from storage
+    // this will not trigger the change event
+    document.getElementById('tags').checked = setting;
+
     // TODO: fade
-  });
+    if(setting) {
+      showTags = true;
+    } else {
+      showTags = false;
+    }
+  }
 
-  document.getElementById('unlines').addEventListener('click', function () {
-    showLines = false;
-    // TODO: fade
-  });
-
-  document.getElementById('tags').addEventListener('click', function () {
-    showTags = true;
-    // TODO: fade
-  });
-
-  document.getElementById('untags').addEventListener('click', function () {
-    showTags = false;
-    // TODO: fade
-  });
 
 }());
