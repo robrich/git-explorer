@@ -26,7 +26,7 @@ async function findRefsInFolder(repoPath: string): Promise<Ref[]> {
     let content: string;
     try {
       content = await fs.readFile(join(gitDir, f), 'utf-8');
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === 'ENOENT') {
         content = '';
       } else {
